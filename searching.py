@@ -1,8 +1,8 @@
 # IMPORTS
-from whoosh.index import create_in
+from whoosh.index import create_in, open_dir
 from whoosh.fields import Schema, TEXT, KEYWORD
 
-schema = Schema(name=TEXT(stored=True, phrase=False), content=TEXT(stored=True), keywords=KEYWORD)
+schema = Schema(name=TEXT(stored=True, phrase=False), content=TEXT(stored=True), keywords=KEYWORD(commas=True))
 idx = create_in("indexdir", schema)
 
 writer = idx.writer()
@@ -39,7 +39,8 @@ def perform_search(query_string):
     from whoosh.qparser import QueryParser, FuzzyTermPlugin, MultifieldParser
 
     with idx.searcher() as searcher:
-        qp = MultifieldParser(["name", "content"], idx.schema)
+        # print(list(searcher.lexicon("keywords")))
+        qp = MultifieldParser(["name", "content", "keywords"], idx.schema)
         qp.add_plugins([FuzzyTermPlugin()])
         if len(query_string) < 4:
             query = qp.parse(query_string)
@@ -50,12 +51,12 @@ def perform_search(query_string):
         results = searcher.search(query)
         print([hit["name"] for hit in results])
 
-        # Special treatment to keywords
-        qp = QueryParser("keywords", schema)
-        # qp.add_plugins([FuzzyTermPlugin()])
-        query = qp.parse(query_string)
-        special_results = searcher.search(query)
-        print([hit for hit in special_results])
+        # # Special treatment to keywords
+        # qp = QueryParser("keywords", schema)
+        # # qp.add_plugins([FuzzyTermPlugin()])
+        # query = qp.parse(query_string)
+        # special_results = searcher.search(query)
+        # print([hit for hit in special_results])
 
     
 
